@@ -6,7 +6,14 @@ from torch.nn import init
 
 from utils import freeze_parameters, get_backbone
 
-
+def freeze_parameters(m, requires_grad=False):
+    if m is None:
+        return
+    if isinstance(m, nn.Parameter):
+        m.requires_grad = requires_grad
+    for p in m.parameters():
+        p.requires_grad = requires_grad
+    
 class CilClassifier(nn.Module):
     def __init__(self, embedding_size, num_classes):
         super(CilClassifier, self).__init__()
