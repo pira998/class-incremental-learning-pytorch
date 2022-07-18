@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import init
 
-from utils import freeze_parameters, get_backbone
+from utils import get_backbone
 
 def freeze_parameters(m, requires_grad=False):
     if m is None:

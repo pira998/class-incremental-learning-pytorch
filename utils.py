@@ -8,7 +8,7 @@ import torch
 from torchvision import transforms
 
 from imagenet import ImageNet1000
-from resnet import resnet20, resnet32, resnet44, resnet56
+from resnet import *
 
 from continuum import ClassIncremental
 from continuum.datasets import CIFAR100, ImageFolderDataset
@@ -155,10 +155,11 @@ def build_transform(is_train, args):
         
         return transforms.Compose(t)
 
-class SmoothedValue(object):
-    """Track a series of values and provide access to smoothed values over a window or the global series average."""
 
+class SmoothedValue(object):
     def __init__(self, window_size=20, fmt=None):
+        if fmt is None:
+            fmt = "{median:.4f} ({global_avg:.4f})"
         self.deque = deque(maxlen=window_size)
         self.total = 0.0
         self.count = 0
@@ -168,12 +169,10 @@ class SmoothedValue(object):
         self.deque.append(value)
         self.count += n
         self.total += value * n
-    
+
     def synchronize_between_processes(self):
-        """
-        Warning: does not synchronize the deque!
-        """
-        t = torch.tensor([self.count, self.total], dtype=torch.float64, device='cuda')
+        t = torch.tensor([self.count, self.total],
+                         dtype=torch.float64, device='cuda')
         torch.distributed.barrier()
         torch.distributed.all_reduce(t)
         t = t.tolist()
@@ -182,11 +181,13 @@ class SmoothedValue(object):
 
     @property
     def median(self):
-        return torch.tensor(list(self.deque)).median().item()
+        d = torch.tensor(list(self.deque))
+        return d.median().item()
 
     @property
     def avg(self):
-        return torch.tensor(list(self.deque), dtype=torch.float32).mean().item()
+        d = torch.tensor(list(self.deque), dtype=torch.float32)
+        return d.mean().item()
 
     @property
     def global_avg(self):
@@ -194,60 +195,42 @@ class SmoothedValue(object):
 
     @property
     def max(self):
-        return np.max(self.deque)
-
-    @property
-    def min(self):
-        return np.min(self.deque)
-
-    @property
-    def std(self):
-        return np.std(self.deque)
-
-    @property
-    def count(self):
-        return len(self.deque)
+        return max(self.deque)
 
     @property
     def value(self):
         return self.deque[-1]
 
-    @property
     def __str__(self):
         return self.fmt.format(
             median=self.median,
             avg=self.avg,
             global_avg=self.global_avg,
             max=self.max,
-            min=self.min,
-            count=self.count,
-            value=self.value,
-            std=self.std,
-        )
+            value=self.value)
 
-class MetricLogger(object):   # encapsulate the logic of logging
-    def __init__(self, delimiter='\t'):
-        self.meters = defaultdict(SmoothedValue) # a dict of SmoothedValue objects
-        self.delimiter = delimiter 
 
-    def update(self, **kwargs):  # update the meters with the values passed in
-        for k, v in kwargs.items(): # for each key, value pair
-            if v is None:
-                continue
-            if isinstance(v, torch.Tensor): #
-                v = v.item() # convert tensor to scalar
-            assert isinstance(v, (float, int)) # make sure it's a number
-            self.meters[k].update(v) # update the meter with the new value
+class MetricLogger(object):
+    def __init__(self, delimiter="\t"):
+        self.meters = defaultdict(SmoothedValue)
+        self.delimiter = delimiter
 
-    def update_dict(self, d):
-        for k, v in d.items():
+    def update(self, **kwargs):
+        for k, v in kwargs.items():
             if v is None:
                 continue
             if isinstance(v, torch.Tensor):
                 v = v.item()
             assert isinstance(v, (float, int))
             self.meters[k].update(v)
-        
+
+    def update_dict(self, d):
+        for k, v in d.items():
+            if isinstance(v, torch.Tensor):
+                v = v.item()
+            assert isinstance(v, (float, int))
+            self.meters[k].update(v)
+
     def __getattr__(self, attr):
         if attr in self.meters:
             return self.meters[attr]
@@ -255,11 +238,13 @@ class MetricLogger(object):   # encapsulate the logic of logging
             return self.__dict__[attr]
         raise AttributeError("'{}' object has no attribute '{}'".format(
             type(self).__name__, attr))
-    
+
     def __str__(self):
         loss_str = []
         for name, meter in self.meters.items():
-            loss_str.append('{}: {:.4f}'.format(name, meter.val))
+            loss_str.append(
+                "{}: {}".format(name, str(meter))
+            )
         return self.delimiter.join(loss_str)
 
     def synchronize_between_processes(self):
@@ -268,4 +253,3 @@ class MetricLogger(object):   # encapsulate the logic of logging
 
     def add_meter(self, name, meter):
         self.meters[name] = meter
-    

@@ -48,8 +48,8 @@ if __name__ == "__main__":
     args.class_order = [ 68, 56, 78, 8,
         23, 84, 90, 65, 74, 76, 40, 89, 3, 92, 55, 9, 26, 80, 43, 38, 58, 70, 77, 1, 85, 19, 17, 50, 28, 53, 13, 81, 45, 82, 6, 59, 83, 16, 15, 44, 91, 41, 72, 60, 79, 52, 20, 10, 31, 54, 37, 95, 14, 71, 96, 98, 97, 2, 64, 66, 42, 22, 35, 86, 24, 34, 87, 21, 99, 0, 88, 27, 18, 94, 11, 12, 47, 25, 30, 46, 62, 69, 36, 61, 7, 63, 75, 5, 32, 4, 51, 48, 73, 93, 39, 67, 29, 49, 57, 33]
 
-    scenario_train, args.num_classes = build_dataset(it_train=True, args=args)
-    scenario_val, _ = build_dataset(it_train=False, args=args)
+    scenario_train, args.num_classes = build_dataset(is_train=True, args=args)
+    scenario_val, _ = build_dataset(is_train=False, args=args)
 
     model = CilModel(args)
     model = model.cuda()
@@ -92,14 +92,14 @@ if __name__ == "__main__":
             dataset_train, # 
             batch_size=args.batch_size, # batch_size is set to 1 for teacher model
             sampler=train_sampler,  
-            num_workers=args.workers, # num_workers is set to 0 for teacher model
+            num_workers=10, # num_workers is set to 0 for teacher model
             pin_memory=True,
         )
         val_loader = DataLoader(
             dataset_val,
             batch_size=args.batch_size,
             sampler=val_sampler,
-            num_workers=args.workers,
+            num_workers=10,
         )
 
         model_without_ddp.prev_model_adaption(args.increment_per_task[task_id])

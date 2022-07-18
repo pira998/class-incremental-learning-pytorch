@@ -121,26 +121,26 @@ class CifarResNet(nn.Module):
 
         return x
         
-    def resnet20(num_classes=10):
-        return CifarResNet(ResNetBasicBlock, 20, num_classes)
-    
-    def resnet10mnist(num_classes=10):
-        return CifarResNet(ResNetBasicBlock, 10, num_classes, 1)
-    
-    def resnet20mnist(num_classes=10):
-        return CifarResNet(ResNetBasicBlock, 20, num_classes, 1)
-    
-    def resnet32mnist(num_classes=10, channels=1):
-        return CifarResNet(ResNetBasicBlock, 32, num_classes, channels)
+def resnet20(num_classes=10):
+    return CifarResNet(ResNetBasicBlock, 20, num_classes)
 
-    def resnet32(num_classes=10):
-        return CifarResNet(ResNetBasicBlock, 32, num_classes)
+def resnet10mnist(num_classes=10):
+    return CifarResNet(ResNetBasicBlock, 10, num_classes, 1)
 
-    def resnet44(num_classes=10):
-        return CifarResNet(ResNetBasicBlock, 44, num_classes)
-    
-    def resnet56(num_classes=10):
-        return CifarResNet(ResNetBasicBlock, 56, num_classes)
-    
-    def resnet110(num_classes=10):
-        return CifarResNet(ResNetBasicBlock, 110, num_classes)
+def resnet20mnist(num_classes=10):
+    return CifarResNet(ResNetBasicBlock, 20, num_classes, 1)
+
+def resnet32mnist(num_classes=10, channels=1):
+    return CifarResNet(ResNetBasicBlock, 32, num_classes, channels)
+
+def resnet32(num_classes=10):
+    return CifarResNet(ResNetBasicBlock, 32, num_classes)
+
+def resnet44(num_classes=10):
+    return CifarResNet(ResNetBasicBlock, 44, num_classes)
+
+def resnet56(num_classes=10):
+    return CifarResNet(ResNetBasicBlock, 56, num_classes)
+
+def resnet110(num_classes=10):
+    return CifarResNet(ResNetBasicBlock, 110, num_classes)
